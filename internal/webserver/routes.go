@@ -18,13 +18,13 @@ func ldapLogin(c *gin.Context) {
 
 		// Set a cookie with the JWT and return it to the client
 		c.SetCookie(
-			"jwt",       // Cookie name
-			tokenString, // Cookie value (JWT token)
-			3600,        // Expiration time in seconds
-			"/",         // Path
-			"localhost", // Domain
-			false,       // Secure flag (true = HTTPS only)
-			true,        // HttpOnly (true = HTTP access only, no JavaScript)
+			"jwt",          // Cookie name
+			tokenString,    // Cookie value (JWT token)
+			3600,           // Expiration time in seconds
+			"/",            // Path
+			c.Request.Host, // Domain
+			false,          // Secure flag (true = HTTPS only)
+			true,           // HttpOnly (true = HTTP access only, no JavaScript)
 		)
 
 		// c.String(200, fmt.Sprintf("User %s is authorized.", loginUser))
