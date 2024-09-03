@@ -17,11 +17,13 @@ func Init(listen string) {
 	router.LoadHTMLGlob("data/static/*")
 	router.GET("/", webServer)
 	router.GET("/login", loginPage)
+	router.GET("/reset-password", authenticate, resetPwdPage)
 	router.NoRoute(pageNotAvailable)
 
 	v1Api := router.Group("v1/api/")
 	v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 	v1Api.POST("/login", ldapLogin)
+	v1Api.POST("/reset-password", authenticate, ldapResetPassword)
 
 	// Debug
 	router.GET("/check-jwt", func(c *gin.Context) {
@@ -48,4 +50,9 @@ func pageNotAvailable(c *gin.Context) {
 // Login Page
 func loginPage(c *gin.Context) {
 	c.HTML(200, "login.tmpl", nil)
+}
+
+// Reset Password Page
+func resetPwdPage(c *gin.Context) {
+	c.HTML(200, "resetpwd.tmpl", nil)
 }

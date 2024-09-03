@@ -34,6 +34,25 @@ func ldapLogin(c *gin.Context) {
 	}
 }
 
+func ldapResetPassword(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	oldPwd := c.PostForm("oldPassword")
+	newPwd := c.PostForm("newPassword")
+
+	err := auth.LdapChangePassword(username.(string), oldPwd, newPwd)
+	if err != nil {
+		c.String(500, "Password update failed, reason: %s", err)
+		return
+	}
+
+	c.String(200, "Username %s Password updated!", username)
+}
+
 func getLdapUserInfo(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {

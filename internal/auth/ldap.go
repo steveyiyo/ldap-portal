@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +13,19 @@ import (
 )
 
 var ldapConn *ldap.Conn
+
+func resetInit() {
+	godotenv.Load()
+
+	ldapUser := os.Getenv("LDAP_USER")
+	ldapPwd := os.Getenv("LDAP_PASSWORD")
+
+	var err error
+	err = ldapConn.Bind(ldapUser, ldapPwd)
+	if err != nil {
+		log.Fatalf("Authorization Failed: %v", err)
+	}
+}
 
 func init() {
 	godotenv.Load()
@@ -101,4 +116,29 @@ func LdapGetUserInfo(username string) (map[string]string, error) {
 	// }
 
 	return userInfo, nil
+}
+
+func LdapChangePassword(username, oldPassword, newPassword string) error {
+	resetInit()
+
+	// Change password
+	changeRequest := ldap.NewModifyRequest(
+		fmt.Sprintf("uid=%s,%s", username, os.Getenv("LDAP_SEARCH_BASE_DN")),
+		nil,
+	)
+	changeRequest.Replace("userPassword", []string{hashPassword(newPassword)})
+
+	err := ldapConn.Modify(changeRequest)
+	if err != nil {
+		return fmt.Errorf("password change failed: %v", err)
+	}
+
+	return nil
+}
+
+// SHA-1 Password
+func hashPassword(password string) string {
+	hash := sha1.New()
+	hash.Write([]byte(password))
+	return "{SHA}" + base64.StdEncoding.EncodeToString(hash.Sum(nil))
 }
