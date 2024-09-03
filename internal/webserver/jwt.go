@@ -34,9 +34,10 @@ func authenticate(c *gin.Context) {
 	tokenString, err := c.Cookie("jwt")
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "JWT cookie not found or empty",
-		})
+		// c.JSON(400, gin.H{
+		// 	"error": "JWT cookie not found or empty",
+		// })
+		c.Redirect(302, "/login")
 		return
 	}
 

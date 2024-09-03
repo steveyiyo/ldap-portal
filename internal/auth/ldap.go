@@ -48,6 +48,7 @@ func init() {
 }
 
 func LdapAuthUser(username, password string) (bool, error) {
+	resetInit()
 	// Filter
 	searchRequest := ldap.NewSearchRequest(
 		os.Getenv("LDAP_SEARCH_BASE_DN"),
