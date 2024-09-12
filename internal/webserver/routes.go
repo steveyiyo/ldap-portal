@@ -37,6 +37,19 @@ func ldapLogin(c *gin.Context) {
 	}
 }
 
+func authLogout(c *gin.Context) {
+	c.SetCookie(
+		"jwt",
+		"",
+		-1,
+		"/",
+		c.Request.Host,
+		false,
+		true,
+	)
+	c.Redirect(302, "/login")
+}
+
 func ldapResetPassword(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {

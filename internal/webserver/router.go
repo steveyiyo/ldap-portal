@@ -19,6 +19,7 @@ func Init(listen string) {
 	router.LoadHTMLGlob("data/static/*")
 	router.GET("/", authenticate, indexPage)
 	router.GET("/login", loginPage)
+	router.GET("/logout", authLogout)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
 	// router.GET("/register", authenticate, resetPwdPage)
