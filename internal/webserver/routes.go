@@ -28,7 +28,10 @@ func ldapLogin(c *gin.Context) {
 		)
 
 		// c.String(200, fmt.Sprintf("User %s is authorized.", loginUser))
-		c.Redirect(302, "/v1/api/getuserinfo")
+		// c.Redirect(302, "/v1/api/getuserinfo")
+
+		// Redirect to the Index Page
+		c.Redirect(302, "/")
 	} else {
 		c.String(401, fmt.Sprintf("User %s not authorized. Error message: %s", loginUser, loginMessage))
 	}
