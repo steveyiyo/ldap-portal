@@ -30,6 +30,7 @@ func Init(listen string) {
 	v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 	v1Api.POST("/login", ldapLogin)
 	v1Api.POST("/reset-password", authenticate, ldapResetPassword)
+	v1Api.POST("/register", createUser)
 
 	// Debug
 	router.GET("/check-jwt", func(c *gin.Context) {
@@ -100,4 +101,15 @@ func loginPage(c *gin.Context) {
 // Reset Password Page
 func resetPwdPage(c *gin.Context) {
 	c.HTML(200, "resetpwd.tmpl", nil)
+}
+
+// Create User
+func createUser(c *gin.Context) {
+	var user auth.UserProfile
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "參數錯誤"})
+		return
+	}
+	auth.LeapCreateUser(user)
+	c.JSON(http.StatusOK, gin.H{"status": "使用者已建立"})
 }

@@ -47,6 +47,30 @@ func init() {
 	log.Println("LDAP connection established and user bound successfully.")
 }
 
+type UserProfile struct {
+	Uid          string
+	HashPassword string
+	Email        string
+	FirstName    string
+	LastName     string
+}
+
+func LeapCreateUser(userInfo UserProfile) {
+	resetInit()
+	addReq := ldap.NewAddRequest(fmt.Sprintf("uid=%s,%s", userInfo.Uid, os.Getenv("LDAP_SEARCH_BASE_DN")), nil)
+	addReq.Attribute("objectClass", []string{"top", "person", "organizationalPerson", "inetOrgPerson"})
+	addReq.Attribute("uid", []string{userInfo.Uid})
+	addReq.Attribute("sn", []string{userInfo.LastName})
+	addReq.Attribute("givenName", []string{userInfo.FirstName})
+	addReq.Attribute("cn", []string{userInfo.FirstName + " " + userInfo.LastName})
+	addReq.Attribute("mail", []string{userInfo.Email})
+	addReq.Attribute("userPassword", []string{userInfo.HashPassword})
+	err := ldapConn.Add(addReq)
+	if err != nil {
+		log.Printf("Failed to create a new user: %v", err)
+	}
+}
+
 func LdapAuthUser(username, password string) (bool, error) {
 	resetInit()
 	// Filter
