@@ -20,9 +20,9 @@ func Init(listen string) {
 	router.GET("/", authenticate, indexPage)
 	router.GET("/login", loginPage)
 	router.GET("/logout", authLogout)
+	router.GET("/register", registerPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
-	// router.GET("/register", authenticate, resetPwdPage)
 
 	router.NoRoute(pageNotAvailable)
 
@@ -30,7 +30,7 @@ func Init(listen string) {
 	v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 	v1Api.POST("/login", ldapLogin)
 	v1Api.POST("/reset-password", authenticate, ldapResetPassword)
-	v1Api.POST("/register", createUser)
+	v1Api.POST("/register", ldapCreateUser)
 
 	// Debug
 	router.GET("/check-jwt", func(c *gin.Context) {
@@ -98,18 +98,21 @@ func loginPage(c *gin.Context) {
 	c.Redirect(302, "/")
 }
 
+// Login Page
+func registerPage(c *gin.Context) {
+	// Check if User Login
+
+	_, err := c.Cookie("jwt")
+
+	if err != nil {
+		c.HTML(200, "register.tmpl", nil)
+		return
+	}
+
+	c.Redirect(302, "/")
+}
+
 // Reset Password Page
 func resetPwdPage(c *gin.Context) {
 	c.HTML(200, "resetpwd.tmpl", nil)
-}
-
-// Create User
-func createUser(c *gin.Context) {
-	var user auth.UserProfile
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "參數錯誤"})
-		return
-	}
-	auth.LeapCreateUser(user)
-	c.JSON(http.StatusOK, gin.H{"status": "使用者已建立"})
 }
