@@ -29,11 +29,15 @@ func Init(listen string) {
 	v1Api := router.Group("/api/v1")
 	{
 		v1Api.GET("/jwt-check", jwtCheck)
-		v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 		v1Api.POST("/login", ldapLogin)
 		v1Api.POST("/logout", authLogout)
 		v1Api.POST("/reset-password", authenticate, ldapResetPassword)
 		v1Api.POST("/register", ldapCreateUser)
+		userInfo := v1Api.Group("/getuserinfo")
+		{
+			userInfo.GET("/", authenticate, getUserInfo)
+			userInfo.GET("/ldap", authenticate, getLdapUserInfo)
+		}
 	}
 
 	// Debug

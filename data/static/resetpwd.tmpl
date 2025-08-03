@@ -20,6 +20,7 @@
     <br>
     <div class="ts very narrow container">
         <div id="message"></div>
+
         <div class="ts segment" id="loader">
             <div class="ts placeholder">
                 <div class="image header"></div>
@@ -29,26 +30,32 @@
                 </div>
             </div>
         </div>
+
         <div class="ts segment" id="userInfoSegment" style="display:none;">
             <table class="ts celled table">
                 <thead>
                     <tr>
-                        <th>正在重設的使用者</th>
+                        <th>屬性</th>
                         <th>內容</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><i class="user icon"></i> 使用者名稱</td>
+                        <td><i class="user icon"></i> 使用者帳號 (Username)</td>
                         <td id="usernameDisplay"></td>
                     </tr>
                     <tr>
-                        <td><i class="mail icon"></i> 電子郵件</td>
+                        <td><i class="id badge icon"></i> 顯示名稱 (Display Name)</td>
+                        <td id="displayNameDisplay"></td>
+                    </tr>
+                    <tr>
+                        <td><i class="mail icon"></i> 電子郵件 (Email)</td>
                         <td id="emailDisplay"></td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
         <div class="ts clearing segment" id="formSegment" style="display:none;">
             <form class="ts form" id="resetForm">
                 <div class="field">
@@ -62,6 +69,7 @@
                 <button class="ts right floated button" type="submit">重設</button>
             </form>
         </div>
+
         <br>
         <a href="https://steveyi.net/">SteveYi</a> All rights reserved. © <script>document.write(new Date().getFullYear())</script>
     </div>
@@ -73,15 +81,16 @@
         document.getElementById('formSegment').style.display = 'none'
         document.getElementById('message').innerHTML = ''
         try {
-            const res = await fetch('/api/v1/getuserinfo', { credentials: 'include' })
+            const res = await fetch('/api/v1/getuserinfo/', { credentials: 'include' })
             if (res.status === 401) {
                 window.location.href = '/login.html'
                 return
             }
             if (!res.ok) throw new Error('伺服器錯誤')
             const data = await res.json()
-            document.getElementById('usernameDisplay').textContent = data.cn || ''
-            document.getElementById('emailDisplay').textContent = data.mail || '無'
+            document.getElementById('usernameDisplay').textContent = data.username || ''
+            document.getElementById('displayNameDisplay').textContent = data.displayName || ''
+            document.getElementById('emailDisplay').textContent = data.email || '無'
             document.getElementById('userInfoSegment').style.display = 'block'
             document.getElementById('formSegment').style.display = 'block'
         } catch (err) {
@@ -96,17 +105,18 @@
         loadUserInfo()
         document.getElementById('resetForm').addEventListener('submit', async function(e) {
             e.preventDefault()
-            const oldPassword = document.getElementById('oldPasswordInput').value
-            const newPassword = document.getElementById('newPasswordInput').value
+            const oldPassword = document.getElementById('oldPasswordInput').value.trim()
+            const newPassword = document.getElementById('newPasswordInput').value.trim()
             const res = await fetch('/api/v1/reset-password', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({oldPassword, newPassword})
+                credentials: 'include',
+                body: JSON.stringify({ oldPassword, newPassword })
             })
             const data = await res.json()
             if (res.ok && data.status === 'success') {
                 alert('密碼已重設成功')
-                window.location.href = '/login'
+                window.location.href = '/login.html'
             } else {
                 alert(data.message || '重設失敗')
             }

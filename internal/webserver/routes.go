@@ -135,3 +135,32 @@ func getLdapUserInfo(c *gin.Context) {
 
 	c.JSON(200, userInfo)
 }
+
+func getUserInfo(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	info, err := auth.LdapGetUserInfo(username.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user info"})
+		return
+	}
+
+	response := gin.H{
+		"username":          username,
+		"displayName":       info["cn"],
+		"distinguishedName": info["dn"],
+		"email":             info["mail"],
+		"groups":            info["memberOf"],
+		"lastLogin":         "",
+		"createdAt":         "",
+		"mfaEnabled":        "",
+		"passwordExpiry":    "",
+		"status":            "OK",
+	}
+
+	c.JSON(http.StatusOK, response)
+}
