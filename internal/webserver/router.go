@@ -17,7 +17,7 @@ func Init(listen string) {
 	config.AllowOrigins = []string{"*"}
 	router.Use(cors.New(config))
 	router.LoadHTMLGlob("data/static/*")
-	router.GET("/", authenticate, indexPage)
+	router.GET("/", indexPage)
 	router.GET("/login", loginPage)
 	router.GET("/register", registerPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)

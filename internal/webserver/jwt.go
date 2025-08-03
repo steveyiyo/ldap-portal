@@ -34,8 +34,7 @@ func generateToken(username string) string {
 func authenticate(c *gin.Context) {
 	tokenString, err := c.Cookie("jwt")
 	if err != nil {
-		c.HTML(200, "auth.tmpl", nil)
-		c.Abort()
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
@@ -43,14 +42,24 @@ func authenticate(c *gin.Context) {
 		return jwtSecret, nil
 	})
 	if err != nil || !token.Valid {
-		c.HTML(200, "auth.tmpl", nil)
-		c.Abort()
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 		return
 	}
 
-	claims := token.Claims.(jwt.MapClaims)
-	username := claims["username"].(string)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
+		return
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid payload"})
+		return
+	}
+
 	c.Set("username", username)
+	c.Next()
 }
 
 func jwtCheck(c *gin.Context) {
