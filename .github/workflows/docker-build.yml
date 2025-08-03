@@ -26,4 +26,4 @@ jobs:
         run: buildah bud --format docker -t ${HARBOR_URL}/steveyiyo/ldap-portal:latest .
 
       - name: buildah push
-        run: buildah push ${HARBOR_URL}/steveyiyo/ldap-portal:latest
+        run: buildah push --creds "$HARBOR_USERNAME:$HARBOR_API_TOKEN" docker://$HARBOR_URL/steveyiyo/ldap-portal:latest
