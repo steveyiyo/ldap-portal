@@ -1,5 +1,5 @@
 # Use the official Go image as the build base
-FROM golang:1.23-alpine AS build
+FROM docker.io/golang:1.23-alpine AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN go build -o ldap-portal
 
 # Use a minimal base image to run the application
-FROM alpine:latest
+FROM docker.io/alpine:latest
 
 # Set the working directory inside the container
 WORKDIR /app
