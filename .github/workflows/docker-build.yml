@@ -14,12 +14,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wireguard-tools
 
-      - name: Bring up WireGuard
-        run: |
-          echo "${{ secrets.WG_CONFIG }}" > wg0.conf
-          sudo chmod 600 wg0.conf
-          sudo wg-quick up wg0
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
