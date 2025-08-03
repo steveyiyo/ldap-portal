@@ -26,7 +26,7 @@ func Init(listen string) {
 
 	router.NoRoute(pageNotAvailable)
 
-	v1Api := router.Group("v1/api/")
+	v1Api := router.Group("/api/v1")
 	v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 	v1Api.POST("/login", ldapLogin)
 	v1Api.POST("/reset-password", authenticate, ldapResetPassword)

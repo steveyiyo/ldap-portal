@@ -13,33 +13,25 @@ import (
 	"github.com/steveyiyo/ldap-portal/internal/auth"
 )
 
+type LoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 func ldapLogin(c *gin.Context) {
-	loginUser := c.PostForm("username")
-	loginPwd := c.PostForm("password")
-	loginCheck, loginMessage := auth.LdapAuthUser(loginUser, loginPwd)
-	if loginCheck {
-		// Authentication successful, generate JWT
-		tokenString := generateToken(loginUser)
-
-		// Set a cookie with the JWT and return it to the client
-		c.SetCookie(
-			"jwt",          // Cookie name
-			tokenString,    // Cookie value (JWT token)
-			3600,           // Expiration time in seconds
-			"/",            // Path
-			c.Request.Host, // Domain
-			false,          // Secure flag (true = HTTPS only)
-			true,           // HttpOnly (true = HTTP access only, no JavaScript)
-		)
-
-		// c.String(200, fmt.Sprintf("User %s is authorized.", loginUser))
-		// c.Redirect(302, "/v1/api/getuserinfo")
-
-		// Redirect to the Index Page
-		c.Redirect(302, "/")
-	} else {
-		c.String(401, fmt.Sprintf("User %s not authorized. Error message: %s", loginUser, loginMessage))
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"status": "error", "message": "invalid request"})
+		return
 	}
+	ok, msg := auth.LdapAuthUser(req.Username, req.Password)
+	if !ok {
+		c.JSON(401, gin.H{"status": "error", "message": msg})
+		return
+	}
+	token := generateToken(req.Username)
+	c.SetCookie("jwt", token, 3600, "/", c.Request.Host, false, true)
+	c.JSON(200, gin.H{"status": "success", "token": token})
 }
 
 // Generate Hash Password
