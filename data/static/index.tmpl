@@ -67,7 +67,7 @@
             try {
                 const res = await fetch('/api/v1/getuserinfo', { credentials: 'include' })
                 if (res.status === 401) {
-                    window.location.href = '/login.html'
+                    window.location.href = '/login'
                     return
                 }
                 if (!res.ok) throw new Error('伺服器錯誤')
@@ -90,7 +90,7 @@
             document.getElementById('refreshBtn').addEventListener('click', loadUser)
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await fetch('/api/v1/logout', { method: 'POST', credentials: 'include' })
-                window.location.href = '/login.html'
+                window.location.href = '/'
             })
         })
     </script>

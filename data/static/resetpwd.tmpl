@@ -56,7 +56,7 @@
         const data = await res.json()
         if (res.ok && data.status === 'success') {
             alert('密碼已重設成功')
-            window.location.href = '/login.html'
+            window.location.href = '/login'
         } else {
             alert(data.message || '重設失敗')
         }
