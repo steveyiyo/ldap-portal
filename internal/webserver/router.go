@@ -19,7 +19,6 @@ func Init(listen string) {
 	router.LoadHTMLGlob("data/static/*")
 	router.GET("/", authenticate, indexPage)
 	router.GET("/login", loginPage)
-	router.GET("/logout", authLogout)
 	router.GET("/register", registerPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
@@ -31,6 +30,7 @@ func Init(listen string) {
 		v1Api.GET("/jwt-check", jwtCheck)
 		v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
 		v1Api.POST("/login", ldapLogin)
+		v1Api.POST("/logout", authLogout)
 		v1Api.POST("/reset-password", authenticate, ldapResetPassword)
 		v1Api.POST("/register", ldapCreateUser)
 	}
