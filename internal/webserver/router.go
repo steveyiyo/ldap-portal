@@ -20,10 +20,15 @@ func Init(listen string) {
 	router.GET("/", indexPage)
 	router.GET("/login", loginPage)
 	router.GET("/register", registerPage)
-	router.GET("/admin", adminPage)
 	router.GET("/no-auth", noAuthPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
+
+	adminRouter := router.Group("/admin")
+	{
+		adminRouter.GET("/", adminPage)
+		adminRouter.GET("/users", adminUserManagementPage)
+	}
 
 	router.NoRoute(pageNotAvailable)
 
@@ -42,6 +47,8 @@ func Init(listen string) {
 		adminApi := v1Api.Group("/admin")
 		{
 			adminApi.POST("/create/svc", createServiceAccount)
+			adminApi.GET("/users", listUsersHandler)
+			adminApi.GET("/users/:username", getUserDetailsHandler)
 		}
 	}
 
@@ -113,6 +120,22 @@ func adminPage(c *gin.Context) {
 		})
 		if err == nil && token.Valid {
 			c.HTML(http.StatusOK, "admin.tmpl", nil)
+			return
+		}
+	}
+	c.Redirect(http.StatusFound, "/")
+}
+
+// adminUserManagementPage
+func adminUserManagementPage(c *gin.Context) {
+	// Check if User Login
+	tokenString, err := c.Cookie("jwt")
+	if err == nil {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err == nil && token.Valid {
+			c.HTML(http.StatusOK, "admin_user_management.tmpl", nil)
 			return
 		}
 	}

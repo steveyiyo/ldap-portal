@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8">
+    <title>使用者管理 - SteveYi Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/tocas-ui/2.3.3/tocas.css">
+</head>
+
+<body>
+    <div class="ts padded horizontally fitted fluid slate">
+        <div class="ts very narrow container">
+            <h1>使用者管理</h1>
+            <button class="ts negative right floated button" id="logoutBtn">登出</button>
+            <button class="ts primary right floated button" id="refreshBtn">重新整理列表</button>
+        </div>
+    </div>
+    <br>
+    <div class="ts very narrow container">
+        <div id="message"></div>
+
+        <div class="ts segment" id="loader">
+            <div class="ts placeholder">
+                <div class="image header"></div>
+                <div class="paragraph">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ts segment" id="usersSegment" style="display:none;">
+            <h3 class="ts header">使用者清單</h3>
+            <table class="ts celled table">
+                <thead>
+                    <tr><th>使用者</th><th>操作</th></tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="ts segment" id="detailSegment" style="display:none;">
+            <h3 class="ts header">使用者詳細資料</h3>
+            <!-- 等待動畫 Placeholder -->
+            <div class="ts placeholder" id="detailLoader">
+                <div class="image header"></div>
+                <div class="paragraph">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </div>
+            </div>
+            <!-- 真正的資料表格，預設隱藏 -->
+            <table class="ts celled table" id="detailTable" style="display:none;">
+                <thead>
+                    <tr><th>屬性</th><th>內容</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>DN</td><td id="detailDn"></td></tr>
+                    <tr><td>UID</td><td id="detailUid"></td></tr>
+                    <tr><td>Common Name</td><td id="detailCn"></td></tr>
+                    <tr><td>Surname (sn)</td><td id="detailSn"></td></tr>
+                    <tr><td>Given Name</td><td id="detailGivenName"></td></tr>
+                    <tr><td>Email</td><td id="detailMail"></td></tr>
+                    <tr><td>Member Of</td><td id="detailMemberOf"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            document.getElementById('loader').style.display = 'block'
+            document.getElementById('usersSegment').style.display = 'none'
+            document.getElementById('detailSegment').style.display = 'none'
+            document.getElementById('message').innerHTML = ''
+            try {
+                const res = await fetch('/api/v1/admin/users', { credentials: 'include' })
+                if (res.status === 401) {
+                    window.location.href = '/'
+                    return
+                }
+                if (!res.ok) throw new Error('伺服器錯誤')
+                const body = await res.json()
+                const tbody = document.getElementById('usersTableBody')
+                tbody.innerHTML = ''
+                body.users.forEach(username => {
+                    const tr = document.createElement('tr')
+                    const tdUser = document.createElement('td')
+                    tdUser.textContent = username
+                    const tdOp = document.createElement('td')
+                    const btn = document.createElement('button')
+                    btn.className = 'ts button small'
+                    btn.textContent = '詳細資訊'
+                    btn.addEventListener('click', () => loadDetails(username))
+                    tdOp.appendChild(btn)
+                    tr.appendChild(tdUser)
+                    tr.appendChild(tdOp)
+                    tbody.appendChild(tr)
+                })
+                document.getElementById('usersSegment').style.display = 'block'
+            } catch (err) {
+                document.getElementById('message').innerHTML =
+                    `<div class="ts red message">載入使用者清單失敗：${err.message}</div>`
+            } finally {
+                document.getElementById('loader').style.display = 'none'
+            }
+        }
+
+        async function loadDetails(username) {
+            document.getElementById('detailSegment').style.display = 'block'
+            // 顯示等待動畫，隱藏資料表
+            document.getElementById('detailLoader').style.display = 'block'
+            document.getElementById('detailTable').style.display = 'none'
+            document.getElementById('message').innerHTML = ''
+            try {
+                const res = await fetch(`/api/v1/admin/users/${encodeURIComponent(username)}`, { credentials: 'include' })
+                if (res.status === 401) {
+                    window.location.href = '/login'
+                    return
+                }
+                if (res.status === 404) {
+                    throw new Error('使用者不存在')
+                }
+                if (!res.ok) throw new Error('伺服器錯誤')
+                const data = await res.json()
+                const u = data.user
+                document.getElementById('detailDn').textContent = u.dn || ''
+                document.getElementById('detailUid').textContent = u.uid || ''
+                document.getElementById('detailCn').textContent = u.cn || ''
+                document.getElementById('detailSn').textContent = u.sn || ''
+                document.getElementById('detailGivenName').textContent = u.givenName || ''
+                document.getElementById('detailMail').textContent = u.mail || '無'
+                document.getElementById('detailMemberOf').textContent = u.memberOf || '無'
+                // 資料填完後隱藏等待動畫，顯示表格
+                document.getElementById('detailLoader').style.display = 'none'
+                document.getElementById('detailTable').style.display = 'table'
+            } catch (err) {
+                document.getElementById('detailLoader').style.display = 'none'
+                document.getElementById('detailTable').style.display = 'none'
+                document.getElementById('message').innerHTML =
+                    `<div class="ts red message">載入使用者詳情失敗：${err.message}</div>`
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers()
+            document.getElementById('refreshBtn').addEventListener('click', loadUsers)
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await fetch('/api/v1/logout', { method: 'POST', credentials: 'include' })
+                window.location.href = '/'
+            })
+        })
+    </script>
+</body>
+
+</html>

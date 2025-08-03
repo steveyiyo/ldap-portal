@@ -59,7 +59,7 @@ type UserProfile struct {
 func LeapCreateUser(userInfo UserProfile) error {
 	resetInit()
 
-	baseDN := os.Getenv("LDAP_SEARCH_BASE_DN")
+	baseDN := fmt.Sprintf("ou=users,%s", os.Getenv("LDAP_SEARCH_BASE_DN"))
 	if baseDN == "" {
 		return fmt.Errorf("LDAP_SEARCH_BASE_DN not set")
 	}
@@ -84,7 +84,7 @@ func LdapAuthUser(username, password string) (bool, error) {
 	resetInit()
 	// Filter
 	searchRequest := ldap.NewSearchRequest(
-		os.Getenv("LDAP_SEARCH_BASE_DN"),
+		fmt.Sprintf("ou=users,%s", os.Getenv("LDAP_SEARCH_BASE_DN")),
 		ldap.ScopeSingleLevel,
 		ldap.NeverDerefAliases,
 		0,
@@ -116,7 +116,7 @@ func LdapAuthUser(username, password string) (bool, error) {
 
 func LdapGetUserInfo(username string) (map[string]string, error) {
 	searchRequest := ldap.NewSearchRequest(
-		os.Getenv("LDAP_SEARCH_BASE_DN"),
+		fmt.Sprintf("ou=users,%s", os.Getenv("LDAP_SEARCH_BASE_DN")),
 		ldap.ScopeSingleLevel,
 		ldap.NeverDerefAliases,
 		0,
@@ -157,7 +157,7 @@ func LdapChangePassword(username, oldPassword, newPassword string) error {
 
 	// Change password
 	changeRequest := ldap.NewModifyRequest(
-		fmt.Sprintf("uid=%s,%s", username, os.Getenv("LDAP_SEARCH_BASE_DN")),
+		fmt.Sprintf("uid=%s,%s", username, fmt.Sprintf("ou=users,%s", os.Getenv("LDAP_SEARCH_BASE_DN"))),
 		nil,
 	)
 	changeRequest.Replace("userPassword", []string{hashPassword(newPassword)})

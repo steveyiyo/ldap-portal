@@ -164,23 +164,3 @@ func getUserInfo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
-
-func createServiceAccount(c *gin.Context) {
-	var req struct {
-		ServiceUsername string `json:"service_username" binding:"required"`
-		Password        string `json:"password" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "參數錯誤"})
-		return
-	}
-
-	svcDn := fmt.Sprintf("cn=%s,ou=ServiceAccounts,dc=steveyi,dc=net", req.ServiceUsername)
-
-	if err := auth.CreateServiceAccount(svcDn, req.Password); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Service account 建立完成"})
-}
