@@ -9,20 +9,36 @@ jobs:
   docker:
     runs-on: ubuntu-20.04
     steps:
-      -
-        name: Set up QEMU
+      - name: Install WireGuard
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wireguard-tools
+
+      - name: Bring up WireGuard
+        run: |
+          echo "${{ secrets.WG_CONFIG }}" > wg0.conf
+          sudo chmod 600 wg0.conf
+          sudo wg-quick up wg0.conf
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-      -
-        name: Set up Docker Buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
+
+      - name: Login to Harbor
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push Docker images
+          registry: ${{ secrets.HARBOR_URL }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_API_TOKEN }}
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2.10.0
         with:
+          context: .
           push: true
-          tags: steveyiyo/ldap-portal:latest
+          tags: ${{ secrets.HARBOR_URL }}/steveyiyo/ldap-portal:latest
