@@ -2,11 +2,9 @@ package webserver
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/steveyiyo/ldap-portal/internal/auth"
 )
 
 func Init(listen string) {
@@ -27,10 +25,13 @@ func Init(listen string) {
 	router.NoRoute(pageNotAvailable)
 
 	v1Api := router.Group("/api/v1")
-	v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
-	v1Api.POST("/login", ldapLogin)
-	v1Api.POST("/reset-password", authenticate, ldapResetPassword)
-	v1Api.POST("/register", ldapCreateUser)
+	{
+		v1Api.GET("/jwt-check", jwtCheck)
+		v1Api.GET("/getuserinfo", authenticate, getLdapUserInfo)
+		v1Api.POST("/login", ldapLogin)
+		v1Api.POST("/reset-password", authenticate, ldapResetPassword)
+		v1Api.POST("/register", ldapCreateUser)
+	}
 
 	// Debug
 	router.GET("/check-jwt", func(c *gin.Context) {
@@ -46,34 +47,7 @@ func Init(listen string) {
 
 // Index Page
 func indexPage(c *gin.Context) {
-	// c.HTML(200, "index.tmpl", nil)
-
-	// If user is not authorized
-	// c.Redirect(302, "/login")
-
-	// If user is authorized
-
-	// Get Username
-	username, exists := c.Get("username")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	// Call LdapGetUserInfo function to retrieve user information
-	userInfo, err := auth.LdapGetUserInfo(username.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user info"})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message":  "Welcome to LDAP Portal",
-		"Username": username,
-		"Name":     userInfo["cn"],
-		"Email":    userInfo["mail"],
-		"MemberOf": userInfo["memberOf"],
-	})
+	c.HTML(200, "index.tmpl", nil)
 }
 
 // 404 Page

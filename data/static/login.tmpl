@@ -34,30 +34,36 @@
             </form>
         </div>
         Copyright © 2019 -
-        <script type="text/javascript">
-            document.write(new Date().getFullYear());
-        </script>
+        <script>document.write(new Date().getFullYear())</script>
         <a href="https://steveyi.net/">SteveYi</a> All rights reserved.
         <br />
     </div>
 
     <script>
-    document.getElementById('loginForm').addEventListener('submit', async function (e) {
-        e.preventDefault()
-        const username = document.getElementById('usernameInput').value.trim()
-        const password = document.getElementById('passwordInput').value
-        const res = await fetch('/api/v1/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+    document.addEventListener('DOMContentLoaded', async function () {
+        try {
+            const res = await fetch('/api/v1/jwt-check', { credentials: 'include' })
+            if (res.ok) {
+                window.location.href = '/'
+                return
+            }
+        } catch (e) { }
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault()
+            const username = document.getElementById('usernameInput').value.trim()
+            const password = document.getElementById('passwordInput').value
+            const res = await fetch('/api/v1/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            const data = await res.json()
+            if (res.ok && data.status === 'success') {
+                window.location.href = '/'
+            } else {
+                alert(data.message || '登入失敗')
+            }
         })
-        const data = await res.json()
-        if (res.ok && data.status === 'success') {
-            localStorage.setItem('token', data.token)
-            window.location.href = '/'
-        } else {
-            alert(data.message || '登入失敗')
-        }
     })
     </script>
 </body>
