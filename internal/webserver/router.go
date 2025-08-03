@@ -2,7 +2,9 @@ package webserver
 
 import (
 	"log"
+	"net/http"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -57,33 +59,33 @@ func pageNotAvailable(c *gin.Context) {
 
 // Login Page
 func loginPage(c *gin.Context) {
-	// Check if User Login
-
-	_, err := c.Cookie("jwt")
-
-	if err != nil {
-		// c.JSON(400, gin.H{
-		// 	"error": "JWT cookie not found or empty",
-		// })
-		c.HTML(200, "login.tmpl", nil)
-		return
+	tokenString, err := c.Cookie("jwt")
+	if err == nil {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err == nil && token.Valid {
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
 	}
-
-	c.Redirect(302, "/")
+	c.HTML(http.StatusOK, "login.tmpl", nil)
 }
 
 // Login Page
 func registerPage(c *gin.Context) {
 	// Check if User Login
-
-	_, err := c.Cookie("jwt")
-
-	if err != nil {
-		c.HTML(200, "register.tmpl", nil)
-		return
+	tokenString, err := c.Cookie("jwt")
+	if err == nil {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err == nil && token.Valid {
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
 	}
-
-	c.Redirect(302, "/")
+	c.HTML(http.StatusOK, "register.tmpl", nil)
 }
 
 // Reset Password Page
