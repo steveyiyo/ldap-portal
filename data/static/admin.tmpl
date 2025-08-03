@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8">
+    <title>管理頁面 - SteveYi Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocas-ui/2.3.3/tocas.css">
+</head>
+
+<body>
+    <div class="ts padded horizontally fitted fluid slate">
+        <div class="ts very narrow container">
+            <h1>系統管理</h1>
+            <button class="ts negative right floated button" id="logoutBtn">登出</button>
+            <button class="ts primary right floated button" id="refreshBtn">重新整理</button>
+        </div>
+    </div>
+    <br>
+    <div class="ts very narrow container">
+        <div id="message"></div>
+
+        <!-- Loader -->
+        <div class="ts segment" id="loader">
+            <div class="ts placeholder">
+                <div class="image header"></div>
+                <div class="paragraph">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin form -->
+        <div class="ts segment" id="adminSegment" style="display:none;">
+            <h3 class="ts header">建立 Service Account</h3>
+            <form class="ts form" id="svcForm">
+                <div class="field">
+                    <label>Username</label>
+                    <input type="text" id="serviceUsernameInput" placeholder="grafana" required>
+                </div>
+                <div class="field">
+                    <label>密碼</label>
+                    <input type="password" id="passwordInput" placeholder="輸入 Service Account 密碼" required>
+                </div>
+                <button class="ts primary button" type="submit">建立</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function checkAdmin() {
+            document.getElementById('loader').style.display = 'block'
+            document.getElementById('message').innerHTML = ''
+            try {
+                const res = await fetch('/api/v1/getuserinfo', { credentials: 'include' })
+                if (res.status === 401) {
+                    window.location.href = '/no-auth'
+                    return
+                }
+                const data = await res.json()
+                // 先暫時允許所有使用者都是 admin
+                const isAdmin = true
+                if (!isAdmin) {
+                    document.getElementById('message').innerHTML =
+                        `<div class="ts red message">您沒有管理權限</div>`
+                    return
+                }
+                document.getElementById('adminSegment').style.display = 'block'
+            } catch (err) {
+                document.getElementById('message').innerHTML =
+                    `<div class="ts red message">發生錯誤：${err.message}</div>`
+            } finally {
+                document.getElementById('loader').style.display = 'none'
+            }
+        }
+
+        async function submitServiceAccount() {
+            document.getElementById('message').innerHTML = ''
+            const service_username = document.getElementById('serviceUsernameInput').value.trim()
+            const password = document.getElementById('passwordInput').value
+            try {
+                const res = await fetch('/api/v1/admin/create/svc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ service_username, password })
+                })
+                const data = await res.json()
+                if (res.ok && data.status === 'success') {
+                    document.getElementById('message').innerHTML =
+                        `<div class="ts green message">建立成功！</div>`
+                } else {
+                    throw new Error(data.message || '建立失敗')
+                }
+            } catch (err) {
+                document.getElementById('message').innerHTML =
+                    `<div class="ts red message">錯誤：${err.message}</div>`
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAdmin()
+            document.getElementById('svcForm').addEventListener('submit', e => {
+                e.preventDefault()
+                submitServiceAccount()
+            })
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                window.location.reload()
+            })
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await fetch('/api/v1/logout', { method: 'POST', credentials: 'include' })
+                window.location.href = '/'
+            })
+        })
+    </script>
+</body>
+
+</html>

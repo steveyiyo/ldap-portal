@@ -20,6 +20,7 @@ func Init(listen string) {
 	router.GET("/", indexPage)
 	router.GET("/login", loginPage)
 	router.GET("/register", registerPage)
+	router.GET("/admin", adminPage)
 	router.GET("/no-auth", noAuthPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
@@ -33,10 +34,14 @@ func Init(listen string) {
 		v1Api.POST("/logout", authLogout)
 		v1Api.POST("/reset-password", authenticate, ldapResetPassword)
 		v1Api.POST("/register", ldapCreateUser)
-		userInfo := v1Api.Group("/getuserinfo")
+		userInfoApi := v1Api.Group("/getuserinfo")
 		{
-			userInfo.GET("/", authenticate, getUserInfo)
-			userInfo.GET("/ldap", authenticate, getLdapUserInfo)
+			userInfoApi.GET("/", authenticate, getUserInfo)
+			userInfoApi.GET("/ldap", authenticate, getLdapUserInfo)
+		}
+		adminApi := v1Api.Group("/admin")
+		{
+			adminApi.POST("/create/svc", createServiceAccount)
 		}
 	}
 
@@ -96,6 +101,22 @@ func registerPage(c *gin.Context) {
 // Reset Password Page
 func resetPwdPage(c *gin.Context) {
 	c.HTML(200, "resetpwd.tmpl", nil)
+}
+
+// Admin Page
+func adminPage(c *gin.Context) {
+	// Check if User Login
+	tokenString, err := c.Cookie("jwt")
+	if err == nil {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err == nil && token.Valid {
+			c.HTML(http.StatusOK, "admin.tmpl", nil)
+			return
+		}
+	}
+	c.Redirect(http.StatusFound, "/")
 }
 
 func noAuthPage(c *gin.Context) {
