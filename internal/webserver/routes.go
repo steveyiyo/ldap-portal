@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -39,7 +40,7 @@ func hashPwd(password string) string {
 	b := make([]byte, 4)
 	_, err := io.ReadFull(rand.Reader, b)
 	if err != nil {
-		fmt.Println("無法生成雜湊")
+		log.Println("無法生成雜湊")
 		os.Exit(1)
 	}
 	h := sha1.New()
@@ -52,19 +53,33 @@ func hashPwd(password string) string {
 
 // Create User
 func ldapCreateUser(c *gin.Context) {
-	var user auth.UserProfile
-	user.Email = c.PostForm("email")
-	user.FirstName = c.PostForm("first_name")
-	user.LastName = c.PostForm("last_name")
-	user.Uid = c.PostForm("username")
-	user.HashPassword = hashPwd(c.PostForm("password"))
+	var req struct {
+		Email     string `json:"email" binding:"required,email"`
+		FirstName string `json:"first_name" binding:"required"`
+		LastName  string `json:"last_name" binding:"required"`
+		Username  string `json:"username" binding:"required"`
+		Password  string `json:"password" binding:"required"`
+	}
 
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "參數錯誤"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "參數錯誤"})
 		return
 	}
-	auth.LeapCreateUser(user)
-	c.JSON(http.StatusOK, gin.H{"status": "使用者已建立"})
+
+	user := auth.UserProfile{
+		Email:        req.Email,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		Uid:          req.Username,
+		HashPassword: hashPwd(req.Password),
+	}
+
+	if err := auth.LeapCreateUser(user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "建立使用者失敗"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "使用者已建立"})
 }
 
 func authLogout(c *gin.Context) {
@@ -81,22 +96,27 @@ func authLogout(c *gin.Context) {
 }
 
 func ldapResetPassword(c *gin.Context) {
+	var req struct {
+		OldPassword string `json:"oldPassword" binding:"required"`
+		NewPassword string `json:"newPassword" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "參數錯誤"})
+		return
+	}
+
 	username, exists := c.Get("username")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "未授權"})
 		return
 	}
 
-	oldPwd := c.PostForm("oldPassword")
-	newPwd := c.PostForm("newPassword")
-
-	err := auth.LdapChangePassword(username.(string), oldPwd, newPwd)
-	if err != nil {
-		c.String(500, "Password update failed, reason: %s", err)
+	if err := auth.LdapChangePassword(username.(string), req.OldPassword, req.NewPassword); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": fmt.Sprintf("密碼更新失敗：%s", err)})
 		return
 	}
 
-	c.String(200, "Username %s Password updated!", username)
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": fmt.Sprintf("使用者 %s 密碼已更新", username)})
 }
 
 func getLdapUserInfo(c *gin.Context) {

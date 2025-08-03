@@ -55,9 +55,19 @@ type UserProfile struct {
 	LastName     string
 }
 
-func LeapCreateUser(userInfo UserProfile) {
+func LeapCreateUser(userInfo UserProfile) error {
 	resetInit()
-	addReq := ldap.NewAddRequest(fmt.Sprintf("uid=%s,%s", userInfo.Uid, os.Getenv("LDAP_SEARCH_BASE_DN")), nil)
+
+	baseDN := os.Getenv("LDAP_SEARCH_BASE_DN")
+	if baseDN == "" {
+		return fmt.Errorf("LDAP_SEARCH_BASE_DN not set")
+	}
+	if ldapConn == nil {
+		return fmt.Errorf("ldap connection is nil")
+	}
+
+	dn := fmt.Sprintf("uid=%s,%s", userInfo.Uid, baseDN)
+	addReq := ldap.NewAddRequest(dn, nil)
 	addReq.Attribute("objectClass", []string{"top", "person", "organizationalPerson", "inetOrgPerson"})
 	addReq.Attribute("uid", []string{userInfo.Uid})
 	addReq.Attribute("sn", []string{userInfo.LastName})
@@ -65,10 +75,8 @@ func LeapCreateUser(userInfo UserProfile) {
 	addReq.Attribute("cn", []string{userInfo.FirstName + " " + userInfo.LastName})
 	addReq.Attribute("mail", []string{userInfo.Email})
 	addReq.Attribute("userPassword", []string{userInfo.HashPassword})
-	err := ldapConn.Add(addReq)
-	if err != nil {
-		log.Printf("Failed to create a new user: %v", err)
-	}
+
+	return ldapConn.Add(addReq)
 }
 
 func LdapAuthUser(username, password string) (bool, error) {
