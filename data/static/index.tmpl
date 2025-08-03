@@ -13,6 +13,7 @@
         <div class="ts very narrow container">
             <h1>使用者資訊</h1>
             <button class="ts negative right floated button" id="logoutBtn">登出</button>
+            <button class="ts secondary right floated button" id="resetPwdBtn">重設密碼</button>
             <button class="ts primary right floated button" id="refreshBtn">重新整理</button>
         </div>
     </div>
@@ -67,7 +68,7 @@
             try {
                 const res = await fetch('/api/v1/getuserinfo', { credentials: 'include' })
                 if (res.status === 401) {
-                    window.location.href = '/login'
+                    window.location.href = '/no-auth'
                     return
                 }
                 if (!res.ok) throw new Error('伺服器錯誤')
@@ -91,6 +92,9 @@
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await fetch('/api/v1/logout', { method: 'POST', credentials: 'include' })
                 window.location.href = '/'
+            })
+            document.getElementById('resetPwdBtn').addEventListener('click', () => {
+                window.location.href = '/reset-password'
             })
         })
     </script>

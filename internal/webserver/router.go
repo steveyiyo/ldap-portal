@@ -20,6 +20,7 @@ func Init(listen string) {
 	router.GET("/", indexPage)
 	router.GET("/login", loginPage)
 	router.GET("/register", registerPage)
+	router.GET("/no-auth", noAuthPage)
 	router.GET("/reset-password", authenticate, resetPwdPage)
 	// router.GET("/forgot-password", authenticate, resetPwdPage)
 
@@ -91,4 +92,8 @@ func registerPage(c *gin.Context) {
 // Reset Password Page
 func resetPwdPage(c *gin.Context) {
 	c.HTML(200, "resetpwd.tmpl", nil)
+}
+
+func noAuthPage(c *gin.Context) {
+	c.HTML(401, "auth.tmpl", nil)
 }

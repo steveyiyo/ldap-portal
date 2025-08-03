@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 
 <head>
     <meta charset="utf-8">
@@ -19,7 +19,37 @@
     </div>
     <br>
     <div class="ts very narrow container">
-        <div class="ts clearing segment">
+        <div id="message"></div>
+        <div class="ts segment" id="loader">
+            <div class="ts placeholder">
+                <div class="image header"></div>
+                <div class="paragraph">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </div>
+            </div>
+        </div>
+        <div class="ts segment" id="userInfoSegment" style="display:none;">
+            <table class="ts celled table">
+                <thead>
+                    <tr>
+                        <th>正在重設的使用者</th>
+                        <th>內容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="user icon"></i> 使用者名稱</td>
+                        <td id="usernameDisplay"></td>
+                    </tr>
+                    <tr>
+                        <td><i class="mail icon"></i> 電子郵件</td>
+                        <td id="emailDisplay"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="ts clearing segment" id="formSegment" style="display:none;">
             <form class="ts form" id="resetForm">
                 <div class="field">
                     <label>舊密碼</label>
@@ -29,37 +59,58 @@
                     <label>新密碼</label>
                     <input placeholder="請輸入新密碼" type="password" id="newPasswordInput">
                 </div>
-                <input type="hidden" id="tokenInput" value="{{.Token}}">
-                <input type="hidden" id="emailInput" value="{{.Email}}">
-                <p>系統會自動記錄您目前的 IP 位置：{{.IPAddress}}</p>
                 <button class="ts right floated button" type="submit">重設</button>
             </form>
         </div>
-        Copyright © 2019 -
-        <script>document.write(new Date().getFullYear())</script>
-        <a href="https://steveyi.net/">SteveYi</a> All rights reserved.
-        <br />
+        <br>
+        <a href="https://steveyi.net/">SteveYi</a> All rights reserved. © <script>document.write(new Date().getFullYear())</script>
     </div>
 
     <script>
-    document.getElementById('resetForm').addEventListener('submit', async function(e) {
-        e.preventDefault()
-        const oldPassword = document.getElementById('oldPasswordInput').value
-        const newPassword = document.getElementById('newPasswordInput').value
-        const token       = document.getElementById('tokenInput').value
-        const email       = document.getElementById('emailInput').value
-        const res = await fetch('/api/v1/reset-password', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({oldPassword, newPassword, token, email})
-        })
-        const data = await res.json()
-        if (res.ok && data.status === 'success') {
-            alert('密碼已重設成功')
-            window.location.href = '/login'
-        } else {
-            alert(data.message || '重設失敗')
+    async function loadUserInfo() {
+        document.getElementById('loader').style.display = 'block'
+        document.getElementById('userInfoSegment').style.display = 'none'
+        document.getElementById('formSegment').style.display = 'none'
+        document.getElementById('message').innerHTML = ''
+        try {
+            const res = await fetch('/api/v1/getuserinfo', { credentials: 'include' })
+            if (res.status === 401) {
+                window.location.href = '/login.html'
+                return
+            }
+            if (!res.ok) throw new Error('伺服器錯誤')
+            const data = await res.json()
+            document.getElementById('usernameDisplay').textContent = data.cn || ''
+            document.getElementById('emailDisplay').textContent = data.mail || '無'
+            document.getElementById('userInfoSegment').style.display = 'block'
+            document.getElementById('formSegment').style.display = 'block'
+        } catch (err) {
+            document.getElementById('message').innerHTML =
+                `<div class="ts red message">載入失敗：${err.message}</div>`
+        } finally {
+            document.getElementById('loader').style.display = 'none'
         }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadUserInfo()
+        document.getElementById('resetForm').addEventListener('submit', async function(e) {
+            e.preventDefault()
+            const oldPassword = document.getElementById('oldPasswordInput').value
+            const newPassword = document.getElementById('newPasswordInput').value
+            const res = await fetch('/api/v1/reset-password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({oldPassword, newPassword})
+            })
+            const data = await res.json()
+            if (res.ok && data.status === 'success') {
+                alert('密碼已重設成功')
+                window.location.href = '/login'
+            } else {
+                alert(data.message || '重設失敗')
+            }
+        })
     })
     </script>
 </body>
